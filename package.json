@@ -13,7 +13,9 @@
     "start": "microbundle watch"
   },
   "dependencies": {
-    "ramda": "^0.25.0"
+    "graphql": "^14.0.2",
+    "lodash": "^4.17.11",
+    "yup": "^0.26.6"
   },
   "devDependencies": {
     "microbundle": "^0.9.0",
