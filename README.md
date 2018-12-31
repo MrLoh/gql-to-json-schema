@@ -1,5 +1,7 @@
 # Convert GraphQL to JSON and Yup schema
 
+Do not use, still in production
+
 ## Usage
 
 ```graphql
@@ -31,6 +33,6 @@ import { gql2jsonSchema } from 'schema-converter-gql-json-yup';
 const jsonSchema = gql2jsonSchema(typeDefs);
 ```
 
-## Similar Projects
+## Prior Art
 
 This was based on [json-schema-to-yup](https://github.com/kristianmandrup/json-schema-to-yup) and [graphSchemaToJson](https://github.com/jjwtay/graphSchemaToJson), but extended, simplified and optimized for the specific usecase. It also provides a properly exported module.
