@@ -1,6 +1,6 @@
 {
   "name": "schema-converter-gql-json-yup",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Convert GraphQL to JSON and Yup schema",
   "repository": "https://github.com/MrLoh/schema-converter-gql-json-yup.git",
   "author": "@MrLoh",
