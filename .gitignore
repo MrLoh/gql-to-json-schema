@@ -62,3 +62,5 @@ typings/
 
 test.schema.json
 test.js
+
+dist/

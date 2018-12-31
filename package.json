@@ -1,17 +1,31 @@
 {
-  "name": "schema-converter-gql-json",
+  "name": "schema-converter-gql-json-yup",
   "version": "0.1.0",
-  "description": "Convert GraphQL to JSON schema",
-  "main": "index.js",
-  "scripts": {},
-  "repository": "https://github.com/MrLoh/schema-converter-gql-json.git",
+  "description": "Convert GraphQL to JSON and Yup schema",
+  "repository": "https://github.com/MrLoh/schema-converter-gql-json-yup.git",
   "author": "@MrLoh",
   "license": "MIT",
+  "source": "src/index.js",
+  "main": "dist/index.js",
+  "module": "dist/foo.mjs",
+  "scripts": {
+    "build": "rm -rf ./dist && microbundle build",
+    "start": "microbundle watch"
+  },
   "dependencies": {
     "ramda": "^0.25.0"
   },
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-preset-env": "^1.7.0"
+    "microbundle": "^0.9.0",
+    "prettier": "^1.15.3"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "arrowParens": "always",
+    "semi": true,
+    "tabs": false,
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "tabWidth": 2
   }
 }
