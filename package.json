@@ -1,0 +1,17 @@
+{
+  "name": "schema-converter-gql-json",
+  "version": "0.1.0",
+  "description": "Convert GraphQL to JSON schema",
+  "main": "index.js",
+  "scripts": {},
+  "repository": "https://github.com/MrLoh/schema-converter-gql-json.git",
+  "author": "@MrLoh",
+  "license": "MIT",
+  "dependencies": {
+    "ramda": "^0.25.0"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-preset-env": "^1.7.0"
+  }
+}
