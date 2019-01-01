@@ -10,7 +10,7 @@
   "module": "dist/foo.mjs",
   "scripts": {
     "build": "rm -rf ./dist && microbundle build",
-    "start": "microbundle watch"
+    "test": "jest --watch"
   },
   "dependencies": {
     "graphql": "^14.0.2",
@@ -18,6 +18,12 @@
     "yup": "^0.26.6"
   },
   "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-eslint": "^10.0.1",
+    "babel-preset-env": "^1.7.0",
+    "eslint": "^5.11.1",
+    "eslint-plugin-jest": "^22.1.2",
+    "jest": "^23.6.0",
     "microbundle": "^0.9.0",
     "prettier": "^1.15.3"
   },
@@ -29,5 +35,55 @@
     "singleQuote": true,
     "trailingComma": "es5",
     "tabWidth": 2
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.js?(x)"
+    ]
+  },
+  "babel": {
+    "presets": [
+      "env"
+    ]
+  },
+  "eslintConfig": {
+    "parser": "babel-eslint",
+    "extends": "eslint:recommended",
+    "plugins": [
+      "jest"
+    ],
+    "env": {
+      "es6": true,
+      "jest/globals": true
+    },
+    "rules": {
+      "no-var": "warn",
+      "prefer-const": "warn",
+      "no-await-in-loop": "error",
+      "prefer-spread": "error",
+      "no-template-curly-in-string": "warn",
+      "valid-jsdoc": "warn",
+      "default-case": "warn",
+      "eqeqeq": [
+        "warn",
+        "smart"
+      ],
+      "no-alert": "error",
+      "no-eval": "warn",
+      "no-extend-native": "warn",
+      "no-implicit-coercion": "warn",
+      "no-useless-concat": "warn",
+      "radix": "warn",
+      "wrap-iife": [
+        "error",
+        "inside"
+      ],
+      "no-shadow": "warn",
+      "no-mixed-spaces-and-tabs": [
+        "error",
+        "smart-tabs"
+      ]
+    }
   }
 }
