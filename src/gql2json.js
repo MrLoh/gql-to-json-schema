@@ -325,6 +325,10 @@ export const gql2jsonSchema = (typeDefs, baseType) => {
           [key]: resolveTypes(getProps({ fieldDefinition, parentTypeName: typeName })),
         }))
       );
+      // set non nullable properties as required
+      jsonSchema.required = Object.keys(jsonSchema.properties).filter(
+        (key) => !jsonSchema.properties[key].nullable
+      );
     }
     return jsonSchema;
   };

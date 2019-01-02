@@ -51,5 +51,18 @@ describe('convert trivial gql schemas', () => {
       'Person'
     );
     expect(jsonSchema.properties.name.nullable).toBe(false);
+    expect(jsonSchema.properties.nickName.nullable).toBe(true);
+  });
+  test('non null values are required', () => {
+    const jsonSchema = gql2jsonSchema(
+      /* GraphQL */ `
+        type Person {
+          name: String!
+          nickName: String
+        }
+      `,
+      'Person'
+    );
+    expect(jsonSchema.required).toEqual(['name']);
   });
 });
