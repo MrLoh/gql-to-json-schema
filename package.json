@@ -14,8 +14,7 @@
   },
   "dependencies": {
     "graphql": "^14.0.2",
-    "lodash": "^4.17.11",
-    "yup": "^0.26.6"
+    "lodash": "^4.17.11"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
