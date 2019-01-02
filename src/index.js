@@ -1,5 +1,5 @@
 import { buildSchema } from 'graphql';
-import { kebabCase } from 'lodash';
+import kebabCase from 'lodash.kebabcase';
 
 const SCALAR = 'ScalarTypeDefinition';
 const ENUM = 'EnumTypeDefinition';
