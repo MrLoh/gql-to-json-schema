@@ -11,6 +11,15 @@ describe('convert provided directives into schema constraints', () => {
     expect(typeof jsonSchema.properties.test.example).toBe('object');
     expect(jsonSchema.properties.test.example).toEqual({ description: 'there is no example' });
   });
+  test('directives without value are supported', () => {
+    const jsonSchema = gql2jsonSchema(gql`
+      type Person {
+        test: String @exampled
+      }
+      directive @exampled on FIELD_DEFINITION
+    `);
+    expect(jsonSchema.properties.test.exampled).toBe(true);
+  });
   test('directive `_` argument generates flat constraint value', () => {
     const jsonSchema = gql2jsonSchema(gql`
       type Person {

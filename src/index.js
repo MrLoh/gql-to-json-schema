@@ -58,9 +58,12 @@ const getDirectives = (def) => {
   if (def && def.astNode) {
     return def.astNode.directives.map((directive) => ({
       name: directive.name.value,
-      args: Object.assign(
-        ...directive.arguments.map((arg) => ({ [arg.name.value]: parseArg(arg.value) }))
-      ),
+      args:
+        directive.arguments &&
+        directive.arguments.length > 0 &&
+        Object.assign(
+          ...directive.arguments.map((arg) => ({ [arg.name.value]: parseArg(arg.value) }))
+        ),
     }));
   } else return [];
 };
@@ -97,7 +100,8 @@ const getConstraints = ({ fieldKinds, typeKinds, typeName, directives }) => {
     directives.forEach(({ name, args }) => {
       // if directtive has single argument named `_` then resolve if directly
       const hasSingleUnderscoreArg = Object.keys(args).length === 1 && Object.keys(args)[0] === '_';
-      constraints[name] = hasSingleUnderscoreArg ? args['_'] : args;
+      // if directive has no arguments interprete set to true
+      constraints[name] = args ? (hasSingleUnderscoreArg ? args['_'] : args) : true;
     });
   }
   return constraints;
