@@ -1,6 +1,6 @@
 import { gql2jsonSchema } from '../src';
 
-describe('conversion of nested graphql schemas', () => {
+describe('convert referenced gql types into nested json objects', () => {
   test('basic functionality', () => {
     const jsonSchema = gql2jsonSchema(/* GraphQL */ `
       type Document {

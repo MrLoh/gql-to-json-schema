@@ -1,18 +1,25 @@
 import { gql2jsonSchema } from '../src';
 
-describe('conversion of trivial graphql schemas', () => {
+describe('convert trivial gql schemas', () => {
   test('basic functionality', () => {
     const jsonSchema = gql2jsonSchema(
       /* GraphQL */ `
         type Person {
           name: String
+          married: Boolean
+          numberOfKids: Int
+          weight: Float
         }
       `,
       'Person'
     );
     expect(jsonSchema.title).toBe('Person');
     expect(jsonSchema.type).toBe('object');
-    expect(jsonSchema.properties).toEqual({ name: { type: 'string', nullable: true } });
+    expect(typeof jsonSchema.properties).toBe('object');
+    expect(jsonSchema.properties.name.type).toBe('string');
+    expect(jsonSchema.properties.married.type).toBe('boolean');
+    expect(jsonSchema.properties.numberOfKids.type).toBe('integer');
+    expect(jsonSchema.properties.weight.type).toBe('number');
   });
   test('infers base type', () => {
     const jsonSchema = gql2jsonSchema(/* GraphQL */ `

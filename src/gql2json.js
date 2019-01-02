@@ -1,4 +1,5 @@
 import { buildSchema } from 'graphql';
+import { kebabCase } from 'lodash';
 
 // import { getDirectives } from './directive';
 
@@ -185,6 +186,17 @@ import { buildSchema } from 'graphql';
 //
 //
 
+const SCALAR = 'ScalarTypeDefinition';
+const ENUM = 'EnumTypeDefinition';
+const DEFAULT = 'DefaultTypeDefinition';
+const OBJECT = 'ObjectTypeDefinition';
+const LIST = 'ListType';
+
+const JSON_FORMAT_TYPES = ['DateTime', 'Date', 'Time', 'Email', 'Url'];
+
+export const libraryScalars = JSON_FORMAT_TYPES.map((type) => `scalar ${type}`).join('\n');
+const mockQuery = 'type Query { pass: Int }';
+
 const getTypeName = (def) => {
   if (def.astNode) {
     let node = def.astNode;
@@ -207,14 +219,24 @@ const getKinds = (def) => {
     } while (node);
     return kinds;
   } else {
-    return ['ScalarTypeDefinition', 'DefaultTypeDefinition'];
+    return [SCALAR, DEFAULT];
   }
 };
 
 const getType = ({ typeName, fieldKinds, typeKinds }) => {
-  if (fieldKinds.includes('ListType')) return 'array';
-  if ([...typeKinds, ...fieldKinds].includes('ObjectTypeDefinition')) return 'object';
-  return typeName.toLowerCase();
+  if (fieldKinds.includes(LIST)) {
+    return 'array';
+  } else if ([...typeKinds, ...fieldKinds].includes(OBJECT)) {
+    return 'object';
+  } else if (typeKinds.includes(ENUM)) {
+    return 'enum';
+  } else if (typeKinds.includes(DEFAULT)) {
+    return { String: 'string', Boolean: 'boolean', Int: 'integer', Float: 'number' }[typeName];
+  } else if (typeKinds.includes(SCALAR)) {
+    return 'string';
+  } else {
+    throw new Error('unhandled type case');
+  }
 };
 
 const getConstraints = ({ fieldKinds }) => {
@@ -225,22 +247,22 @@ const getConstraints = ({ fieldKinds }) => {
   return constraints;
 };
 
-const getTypeAndConstraints = (typeProps) => ({
-  type: getType(typeProps),
-  ...getConstraints(typeProps),
-});
+const getFields = (typeDefinition) => typeDefinition.getFields && typeDefinition.getFields();
+
+const getValues = (typeDefinition) =>
+  typeDefinition.getValues &&
+  typeDefinition.getValues().map(({ description, name, value }) => ({ description, name, value }));
 
 const getDescription = ({ typeDefinition, fieldDefinition, typeKinds }) => {
   if (fieldDefinition && fieldDefinition.description) return fieldDefinition.description;
-  if (!typeKinds.includes('DefaultTypeDefinition') && typeDefinition.description)
-    return typeDefinition.description;
+  if (!typeKinds.includes(DEFAULT) && typeDefinition.description) return typeDefinition.description;
 };
 
 export const gql2jsonSchema = (typeDefs, baseType) => {
   // if not specified, infer first type to be the base type
   if (!baseType) baseType = typeDefs.match(/\s*type\s*(\w*)/)[1];
   // build gql schema object from type defs and get map of relevant types
-  const gqlSchema = buildSchema(typeDefs + 'type Query { pass: Int }');
+  const gqlSchema = buildSchema(typeDefs + mockQuery + libraryScalars);
   const typeMap = Object.assign(
     ...Object.entries(gqlSchema.getTypeMap())
       .filter(([key]) => key.substring(0, 2) !== '__' && key !== 'Query')
@@ -257,12 +279,14 @@ export const gql2jsonSchema = (typeDefs, baseType) => {
     const typeKinds = getKinds(typeDefinition);
     const fieldKinds = getKinds(fieldDefinition);
     const description = getDescription({ typeDefinition, fieldDefinition, typeKinds });
-    const fields = typeDefinition.getFields && typeDefinition.getFields();
-    return { typeName, fieldKinds, typeKinds, description, fields, name };
+    const fields = getFields(typeDefinition);
+    const values = getValues(typeDefinition);
+    return { typeName, fieldKinds, typeKinds, description, fields, name, values };
   };
+
   // converter function to reduce gql to json type definitions
   const resolveTypes = (props) => {
-    const { typeName, fieldKinds, typeKinds, description, fields, name } = props;
+    const { typeName, fieldKinds, typeKinds, description, fields, name, values } = props;
     // get properties that depend on field types
     const constraints = getConstraints({ fieldKinds });
     const type = getType({ typeName, fieldKinds, typeKinds });
@@ -270,17 +294,31 @@ export const gql2jsonSchema = (typeDefs, baseType) => {
     const jsonSchema = { type, ...constraints };
     // only set des ription, if it was given
     if (description) jsonSchema.description = description;
-    // handle arrays
-    if (jsonSchema.type === 'array') {
+    // set type name for objects, enums, and custom scalars
+    if (
+      (!typeKinds.includes(DEFAULT) && typeKinds.includes(SCALAR)) ||
+      ['enum', 'object'].includes(type)
+    ) {
+      jsonSchema.name = name;
+    }
+    // set format for predefined scalar types
+    if (typeKinds.includes(SCALAR) && JSON_FORMAT_TYPES.includes(name)) {
+      jsonSchema.format = kebabCase(name);
+    }
+    // handle enums
+    if (type === 'enum') {
+      jsonSchema.type = 'string';
+      jsonSchema.enum = values;
+    }
+    // handle lists
+    if (type === 'array') {
       // remove first types to handle nullability and type resolution correctly
       const itemFieldKinds = ['FieldDefinition', ...fieldKinds.slice(jsonSchema.nullable ? 2 : 3)];
       // recursively resolve arrays
       jsonSchema.items = resolveTypes({ ...props, fieldKinds: itemFieldKinds });
     }
-    // handle objects
-    if (jsonSchema.type === 'object') {
-      // set type name for objects
-      jsonSchema.name = name;
+    // handle referenced types
+    if (type === 'object') {
       // recursively resolve objects
       jsonSchema.properties = Object.assign(
         ...Object.entries(fields).map(([key, fieldDefinition]) => ({
@@ -290,6 +328,7 @@ export const gql2jsonSchema = (typeDefs, baseType) => {
     }
     return jsonSchema;
   };
+
   // return nested json schema for base type
   return { title: baseType, ...resolveTypes(getProps({ typeName: baseType })) };
 };

@@ -1,6 +1,6 @@
 import { gql2jsonSchema } from '../src';
 
-describe('conversion of arrays in graphql schemas', () => {
+describe('convert gql schema lists into json array types', () => {
   test('basic functionality', () => {
     const jsonSchema = gql2jsonSchema(/* GraphQL */ `
       type Document {
