@@ -1,9 +1,9 @@
-import { gql2jsonSchema } from '../src';
+import { gql, gql2jsonSchema } from '../src';
 
 describe('convert trivial gql schemas', () => {
   test('basic functionality', () => {
     const jsonSchema = gql2jsonSchema(
-      /* GraphQL */ `
+      gql`
         type Person {
           name: String
           married: Boolean
@@ -22,7 +22,7 @@ describe('convert trivial gql schemas', () => {
     expect(jsonSchema.properties.weight.type).toBe('number');
   });
   test('infers base type', () => {
-    const jsonSchema = gql2jsonSchema(/* GraphQL */ `
+    const jsonSchema = gql2jsonSchema(gql`
       type Person {
         name: String
       }
@@ -30,7 +30,7 @@ describe('convert trivial gql schemas', () => {
     expect(jsonSchema.title).toBe('Person');
   });
   test('finds descriptions', () => {
-    const jsonSchema = gql2jsonSchema(/* GraphQL */ `
+    const jsonSchema = gql2jsonSchema(gql`
       "a typical person"
       type Person {
         "the name of the person"
@@ -42,7 +42,7 @@ describe('convert trivial gql schemas', () => {
   });
   test('detects nullability', () => {
     const jsonSchema = gql2jsonSchema(
-      /* GraphQL */ `
+      gql`
         type Person {
           name: String!
           nickName: String
@@ -55,7 +55,7 @@ describe('convert trivial gql schemas', () => {
   });
   test('non null values are required', () => {
     const jsonSchema = gql2jsonSchema(
-      /* GraphQL */ `
+      gql`
         type Person {
           name: String!
           nickName: String

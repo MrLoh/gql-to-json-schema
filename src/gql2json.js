@@ -223,6 +223,33 @@ const getKinds = (def) => {
   }
 };
 
+const parseArg = (arg) => {
+  switch (arg.kind) {
+    case 'IntValue':
+      return Number.parseInt(arg.value, 10);
+    case 'FloatValue':
+      return Number.parseFloat(arg.value);
+    case 'ObjectValue':
+      return Object.assign(...arg.fields.map(({ name, value }) => ({ [name.value]: value })));
+    case 'ListValue':
+      return arg.values.map((argItem) => parseArg(argItem));
+    case 'StringValue':
+    default:
+      return arg.value;
+  }
+};
+
+const getDirectives = (def) => {
+  if (def && def.astNode) {
+    return def.astNode.directives.map((directive) => ({
+      name: directive.name.value,
+      args: Object.assign(
+        ...directive.arguments.map((arg) => ({ [arg.name.value]: parseArg(arg.value) }))
+      ),
+    }));
+  } else return [];
+};
+
 const getType = ({ typeName, fieldKinds, typeKinds }) => {
   if (fieldKinds.includes(LIST)) {
     return 'array';
@@ -239,10 +266,24 @@ const getType = ({ typeName, fieldKinds, typeKinds }) => {
   }
 };
 
-const getConstraints = ({ fieldKinds }) => {
+const getConstraints = ({ fieldKinds, typeKinds, typeName, directives }) => {
   const constraints = {};
+  // set nullability for field
   if (fieldKinds.length > 0) {
     constraints.nullable = fieldKinds[1] !== 'NonNullType';
+  }
+  // set format for predefined scalar types
+  if (typeKinds.includes(SCALAR) && JSON_FORMAT_TYPES.includes(typeName)) {
+    constraints.format = kebabCase(typeName);
+  }
+  // handle directives
+  if (directives.length > 0) {
+    // assign directives as constraints
+    directives.forEach(({ name, args }) => {
+      // if directtive has single argument named `_` then resolve if directly
+      const hasSingleUnderscoreArg = Object.keys(args).length === 1 && Object.keys(args)[0] === '_';
+      constraints[name] = hasSingleUnderscoreArg ? args['_'] : args;
+    });
   }
   return constraints;
 };
@@ -258,16 +299,21 @@ const getDescription = ({ typeDefinition, fieldDefinition, typeKinds }) => {
   if (!typeKinds.includes(DEFAULT) && typeDefinition.description) return typeDefinition.description;
 };
 
-export const gql2jsonSchema = (typeDefs, baseType) => {
+export const gql2jsonSchema = (typeDefs, baseType, { noQuery, noDefaultScalars } = {}) => {
   // if not specified, infer first type to be the base type
   if (!baseType) baseType = typeDefs.match(/\s*type\s*(\w*)/)[1];
   // build gql schema object from type defs and get map of relevant types
-  const gqlSchema = buildSchema(typeDefs + mockQuery + libraryScalars);
+  const gqlSchema = buildSchema(
+    typeDefs + (noQuery ? '' : mockQuery) + (noDefaultScalars ? '' : libraryScalars)
+  );
   const typeMap = Object.assign(
     ...Object.entries(gqlSchema.getTypeMap())
       .filter(([key]) => key.substring(0, 2) !== '__' && key !== 'Query')
       .map(([key, value]) => ({ [key]: value }))
   );
+  // const directiveMap = Object.assign(
+  //   ...gqlSchema.getDirectives().map((directive) => ({ [directive.name]: directive }))
+  // );
 
   // handles all props that don't depend on fieldKinds, since recursion for arrays alter fieldKinds
   const getProps = ({ fieldDefinition, typeName, parentTypeName }) => {
@@ -275,40 +321,36 @@ export const gql2jsonSchema = (typeDefs, baseType) => {
     typeName = typeName ? typeName : getTypeName(fieldDefinition);
     if (typeName === parentTypeName) throw new Error('recursive schemas are not supported');
     const typeDefinition = typeMap[typeName];
-    const name = typeDefinition.name;
     const typeKinds = getKinds(typeDefinition);
     const fieldKinds = getKinds(fieldDefinition);
+    const directives = getDirectives(fieldDefinition);
     const description = getDescription({ typeDefinition, fieldDefinition, typeKinds });
     const fields = getFields(typeDefinition);
     const values = getValues(typeDefinition);
-    return { typeName, fieldKinds, typeKinds, description, fields, name, values };
+    return { typeName, fieldKinds, typeKinds, description, fields, values, directives };
   };
 
   // converter function to reduce gql to json type definitions
   const resolveTypes = (props) => {
-    const { typeName, fieldKinds, typeKinds, description, fields, name, values } = props;
+    const { typeName, fieldKinds, typeKinds, directives } = props;
     // get properties that depend on field types
-    const constraints = getConstraints({ fieldKinds });
+    const constraints = getConstraints({ fieldKinds, typeKinds, typeName, directives });
     const type = getType({ typeName, fieldKinds, typeKinds });
     // build schema object
     const jsonSchema = { type, ...constraints };
     // only set des ription, if it was given
-    if (description) jsonSchema.description = description;
+    if (props.description) jsonSchema.description = props.description;
     // set type name for objects, enums, and custom scalars
     if (
       (!typeKinds.includes(DEFAULT) && typeKinds.includes(SCALAR)) ||
       ['enum', 'object'].includes(type)
     ) {
-      jsonSchema.name = name;
-    }
-    // set format for predefined scalar types
-    if (typeKinds.includes(SCALAR) && JSON_FORMAT_TYPES.includes(name)) {
-      jsonSchema.format = kebabCase(name);
+      jsonSchema.name = typeName;
     }
     // handle enums
     if (type === 'enum') {
       jsonSchema.type = 'string';
-      jsonSchema.enum = values;
+      jsonSchema.enum = props.values;
     }
     // handle lists
     if (type === 'array') {
@@ -321,7 +363,7 @@ export const gql2jsonSchema = (typeDefs, baseType) => {
     if (type === 'object') {
       // recursively resolve objects
       jsonSchema.properties = Object.assign(
-        ...Object.entries(fields).map(([key, fieldDefinition]) => ({
+        ...Object.entries(props.fields).map(([key, fieldDefinition]) => ({
           [key]: resolveTypes(getProps({ fieldDefinition, parentTypeName: typeName })),
         }))
       );
@@ -336,3 +378,6 @@ export const gql2jsonSchema = (typeDefs, baseType) => {
   // return nested json schema for base type
   return { title: baseType, ...resolveTypes(getProps({ typeName: baseType })) };
 };
+
+export const gql = (strings, ...values) =>
+  strings.reduce((result, str, i) => result + str + (values[i] || ''));

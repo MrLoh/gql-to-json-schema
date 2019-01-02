@@ -1,8 +1,8 @@
-import { gql2jsonSchema } from '../src';
+import { gql, gql2jsonSchema } from '../src';
 
 describe('convert gql enum and scalar types into json constraints', () => {
   test('handles enums', () => {
-    const jsonSchema = gql2jsonSchema(/* GraphQL */ `
+    const jsonSchema = gql2jsonSchema(gql`
       type Person {
         gender: Gender!
       }
@@ -21,7 +21,7 @@ describe('convert gql enum and scalar types into json constraints', () => {
     ]);
   });
   test('finds descriptions for enums', () => {
-    const jsonSchema = gql2jsonSchema(/* GraphQL */ `
+    const jsonSchema = gql2jsonSchema(gql`
       type Person {
         gender: Gender!
       }
@@ -40,7 +40,7 @@ describe('convert gql enum and scalar types into json constraints', () => {
     ]);
   });
   test('handles custom scalars', () => {
-    const jsonSchema = gql2jsonSchema(/* GraphQL */ `
+    const jsonSchema = gql2jsonSchema(gql`
       type Document {
         filePath: FilePath
       }
@@ -50,7 +50,7 @@ describe('convert gql enum and scalar types into json constraints', () => {
     expect(jsonSchema.properties.filePath.name).toBe('FilePath');
   });
   test('handles predefined scalars', () => {
-    const jsonSchema = gql2jsonSchema(/* GraphQL */ `
+    const jsonSchema = gql2jsonSchema(gql`
       type Persom {
         email: Email
         website: Url

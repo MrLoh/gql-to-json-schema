@@ -1,37 +1,26 @@
-import * as consts from './consts';
-
 const kindEquals = (testKind) => ({ kind }) => kind === testKind;
 
-const convertArgument = ({ kind, value, fields, values }) => {
-  switch (kind) {
-    case consts.INT_VALUE:
-      return Number.parseInt(value, 10);
-    case consts.FLOAT_VALUE:
-      return Number.parseFloat(value);
-    case consts.OBJECT_VALUE:
-      return Object.assign(...fields.map(({ name, value }) => ({ [name.value]: value })));
-    case consts.LIST_VALUE:
-      return values.map((arg) => convertArgument(arg));
-    case consts.STRING_VALUE:
-    default:
-      return value;
-  }
-};
+export const FLOAT_VALUE = 'FloatValue';
+export const INT_VALUE = 'IntValue';
+export const LIST_VALUE = 'ListValue';
+export const OBJECT_VALUE = 'ObjectValue';
+export const STRING_VALUE = 'StringValue';
+
+const parseArg = (arg) =>
+  ({
+    IntValue: Number.parseInt(arg.value, 10),
+    FloatValue: Number.parseFloat(arg.value),
+    ObjectValue: Object.assign(...arg.fields.map((field) => ({ [field.name.value]: field.value }))),
+    ListValue: arg.values.map((argItem) => parseArg(argItem)),
+    StringValue: arg.value,
+  }[arg.kind]);
 
 export const getDirectives = (type) => {
-  const directives = type.astNode.directives;
-  return directives.reduce(
-    (dirs, directive) => ({
-      ...dirs,
-      directivesKeys: directives,
-      [directive.name.value]: directive.arguments.reduce(
-        (args, arg) => ({
-          ...args,
-          [arg.name.value]: convertArgument(arg.value),
-        }),
-        {}
+  return Object.assign(
+    ...type.astNode.directives.map((directive) => ({
+      [directive.name.value]: Object.assign(
+        ...directive.arguments.map((arg) => ({ [arg.name.value]: parseArg(arg.value) }))
       ),
-    }),
-    {}
+    }))
   );
 };

@@ -1,8 +1,8 @@
-import { gql2jsonSchema } from '../src';
+import { gql, gql2jsonSchema } from '../src';
 
 describe('convert gql schema lists into json array types', () => {
   test('basic functionality', () => {
-    const jsonSchema = gql2jsonSchema(/* GraphQL */ `
+    const jsonSchema = gql2jsonSchema(gql`
       type Document {
         tags: [String]
       }
@@ -12,7 +12,7 @@ describe('convert gql schema lists into json array types', () => {
     });
   });
   test('finds descriptions', () => {
-    const jsonSchema = gql2jsonSchema(/* GraphQL */ `
+    const jsonSchema = gql2jsonSchema(gql`
       "a random document"
       type Document {
         "helps you find it"
@@ -24,7 +24,7 @@ describe('convert gql schema lists into json array types', () => {
   });
   test('detects nullability', () => {
     expect(
-      gql2jsonSchema(/* GraphQL */ `
+      gql2jsonSchema(gql`
         type Document {
           tags: [String!]!
         }
@@ -33,7 +33,7 @@ describe('convert gql schema lists into json array types', () => {
       tags: { type: 'array', nullable: false, items: { type: 'string', nullable: false } },
     });
     expect(
-      gql2jsonSchema(/* GraphQL */ `
+      gql2jsonSchema(gql`
         type Document {
           tags: [String!]
         }
@@ -42,7 +42,7 @@ describe('convert gql schema lists into json array types', () => {
       tags: { type: 'array', nullable: true, items: { type: 'string', nullable: false } },
     });
     expect(
-      gql2jsonSchema(/* GraphQL */ `
+      gql2jsonSchema(gql`
         type Document {
           tags: [String]!
         }

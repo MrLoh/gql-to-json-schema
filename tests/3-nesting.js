@@ -1,8 +1,8 @@
-import { gql2jsonSchema } from '../src';
+import { gql, gql2jsonSchema } from '../src';
 
 describe('convert referenced gql types into nested json objects', () => {
   test('basic functionality', () => {
-    const jsonSchema = gql2jsonSchema(/* GraphQL */ `
+    const jsonSchema = gql2jsonSchema(gql`
       type Document {
         author: Person
       }
@@ -18,7 +18,7 @@ describe('convert referenced gql types into nested json objects', () => {
   });
   test('detects nullability', () => {
     expect(
-      gql2jsonSchema(/* GraphQL */ `
+      gql2jsonSchema(gql`
         type Document {
           author: Person!
         }
@@ -29,7 +29,7 @@ describe('convert referenced gql types into nested json objects', () => {
     ).toBe(false);
   });
   test('finds descriptions', () => {
-    const jsonSchema = gql2jsonSchema(/* GraphQL */ `
+    const jsonSchema = gql2jsonSchema(gql`
       "a random document"
       type Document {
         "the author of the document"
@@ -46,7 +46,7 @@ describe('convert referenced gql types into nested json objects', () => {
     expect(jsonSchema.properties.author.properties.name.description).toBe('how you call them');
   });
   test('handles objects in arrays', () => {
-    const jsonSchema = gql2jsonSchema(/* GraphQL */ `
+    const jsonSchema = gql2jsonSchema(gql`
       type Document {
         authors: [Person!]!
       }
@@ -62,7 +62,7 @@ describe('convert referenced gql types into nested json objects', () => {
     });
   });
   test('handles deep nesting', () => {
-    const jsonSchema = gql2jsonSchema(/* GraphQL */ `
+    const jsonSchema = gql2jsonSchema(gql`
       type Document {
         tags: [Tag!]!
       }
@@ -82,7 +82,7 @@ describe('convert referenced gql types into nested json objects', () => {
   });
   test('throws error for recursive schemas', () => {
     try {
-      gql2jsonSchema(/* GraphQL */ `
+      gql2jsonSchema(gql`
         type Person {
           friends: [Person!]
         }
