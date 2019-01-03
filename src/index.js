@@ -7,7 +7,7 @@ const DEFAULT = 'DefaultTypeDefinition';
 const OBJECT = 'ObjectTypeDefinition';
 const LIST = 'ListType';
 
-const JSON_FORMAT_TYPES = ['DateTime', 'Date', 'Time', 'Email', 'Url'];
+const JSON_FORMAT_TYPES = ['DateTime', 'Date', 'Time', 'Email', 'Url', 'Markdown'];
 
 export const libraryScalars = JSON_FORMAT_TYPES.map((type) => `scalar ${type}`).join('\n');
 const mockQuery = 'type Query { pass: Int }';

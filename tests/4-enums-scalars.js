@@ -57,6 +57,7 @@ describe('convert gql enum and scalar types into json constraints', () => {
         birthdate: DateTime
         wakeUpTime: Time
         nameDay: Date
+        bio: Markdown
       }
     `);
     expect(jsonSchema.properties.email.type).toBe('string');
@@ -69,5 +70,7 @@ describe('convert gql enum and scalar types into json constraints', () => {
     expect(jsonSchema.properties.wakeUpTime.format).toBe('time');
     expect(jsonSchema.properties.nameDay.type).toBe('string');
     expect(jsonSchema.properties.nameDay.format).toBe('date');
+    expect(jsonSchema.properties.bio.type).toBe('string');
+    expect(jsonSchema.properties.bio.format).toBe('markdown');
   });
 });
