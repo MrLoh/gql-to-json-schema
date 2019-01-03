@@ -7,10 +7,11 @@
   "license": "MIT",
   "source": "src/index.js",
   "main": "dist/index.js",
-  "module": "dist/foo.mjs",
+  "module": "dist/index.mjs",
   "scripts": {
-    "build": "rm -rf ./dist && microbundle build",
-    "test": "jest --watch"
+    "build": "rm -rf ./dist && microbundle build -f cjs,es",
+    "prepublishOnly": "npm run build",
+    "test": "jest"
   },
   "dependencies": {
     "graphql": "^14.0.2",
